@@ -1,0 +1,8 @@
+Flask
+psycopg2-binary
+Flask-Cors
+python-dotenv
+googlemaps
+scikit-learn
+pandas
+gunicorn
