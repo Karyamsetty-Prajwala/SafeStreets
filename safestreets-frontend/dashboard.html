@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SafeStreets Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- Core Styles & Typography --- */
+        :root {
+            --primary-color: #2575fc;
+            --secondary-color: #6a11cb;
+            --text-color-dark: #111;
+            --text-color-light: #fff;
+            --bg-overlay: rgba(0, 0, 0, 0.4);
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --card-bg: #fff;
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            color: var(--text-color-dark);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        #bg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -10;
+            filter: brightness(0.6) blur(2px);
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -9;
+        }
+        
+        .main-header {
+            background-color: rgba(0, 0, 0, 0.6);
+            color: var(--text-color-light);
+            padding: 15px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-size: 1.8em;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        
+        .main-nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        
+        .main-nav ul li {
+            margin-left: 30px;
+        }
+        
+        .main-nav ul li a {
+            color: var(--text-color-light);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95em;
+            transition: color 0.3s ease;
+        }
+        
+        .main-nav ul li a:hover {
+            color: #ffd700;
+        }
+        
+        .dashboard-container {
+            margin-top: 100px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .dashboard-container h1 {
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+            font-weight: 700;
+            font-size: 2.5em;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 1.1em;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            font-size: 1em;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(37, 117, 252, 0.5);
+        }
+        
+        .submit-btn {
+            background: linear-gradient(to right, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: var(--text-color-light);
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .submit-btn:hover {
+            background: linear-gradient(to left, var(--primary-color) 0%, var(--secondary-color) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .main-header { flex-direction: column; padding: 10px 20px; }
+            .main-nav ul { flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+            .main-nav ul li { margin: 5px 10px; }
+            .dashboard-container { padding: 20px; }
+            .dashboard-container h1 { font-size: 2em; }
+        }
+        .route-button:hover {
+  background: linear-gradient(90deg, #5c2c77, #4a1961); /* A slightly darker gradient */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.route-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  color: white;
+  font-size: 1.2em;
+  text-align: center;
+  display: none; /* Initially hidden */
+}
+
+.spinner {
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #fff;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+    </style>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA3emQ7hGvYfxVuH68wHHIwcBCFzP88y-4&libraries=places&callback=initAutocomplete">
+    </script>
+</head>
+<body>
+    <video playsinline autoplay muted loop id="bg-video">
+        <source src="Video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <header class="main-header">
+        <div class="logo">SafeStreets</div>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="landing.html">HOME</a></li>
+                <li><a href="dashboard.html">DASHBOARD</a></li>
+                <li><a href="index.html">LOGOUT</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+
+    <div class="dashboard-container">
+        <h1>Find Your Safest Route</h1>
+        <form id="routeForm">
+            <div class="form-group">
+                <label for="origin">Origin:</label>
+                <input type="text" id="origin" placeholder="Enter your starting location" required>
+            </div>
+            <div class="form-group">
+                <label for="destination">Destination:</label>
+                <input type="text" id="destination" placeholder="Enter your destination" required>
+            </div>
+            <input type="hidden" id="selectedPreference" name="preference" value="safest">
+            <button type="submit" class="submit-btn">Find Safe Routes</button>
+        </form>
+    </div>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Finding the safest routes...</p>
+    </div>
+
+    <script>
+        
+    // Google Maps Places Autocomplete & Geocoding
+    let geocoder;
+    function initAutocomplete() {
+        geocoder = new google.maps.Geocoder();
+        const originInput = document.getElementById('origin');
+        const destinationInput = document.getElementById('destination');
+
+        new google.maps.places.Autocomplete(originInput, {
+            types: ['geocode'],
+            componentRestrictions: {'country': 'in'}
+        });
+
+        new google.maps.places.Autocomplete(destinationInput, {
+            types: ['geocode'],
+            componentRestrictions: {'country': 'in'}
+        });
+    }
+
+    async function geocodeAddress(address) {
+        return new Promise((resolve, reject) => {
+            geocoder.geocode({ 'address': address }, (results, status) => {
+                if (status === 'OK') {
+                    const location = results[0].geometry.location;
+                    resolve([location.lat(), location.lng()]);
+                } else {
+                    reject('Geocode was not successful for the following reason: ' + status);
+                }
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const routeForm = document.getElementById('routeForm');
+        routeForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const selectedPreference = document.getElementById('selectedPreference').value;
+
+            if (!origin || !destination) {
+                alert('Please enter both origin and destination.');
+                return;
+            }
+
+            try {
+                // Get coordinates from the address strings
+                const startPointCoords = await geocodeAddress(origin);
+                const endPointCoords = await geocodeAddress(destination);
+                
+                const response = await fetch('http://127.0.0.1:5000/api/get_routes_with_safety', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        start_point: startPointCoords,
+                        end_point: endPointCoords,
+                        preference: selectedPreference
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'success') {
+                    // Store data and preference in localStorage to be used by map_display.html
+                    localStorage.setItem('routePredictionData', JSON.stringify(data));
+                    localStorage.setItem('selectedRoutePreference', selectedPreference);
+                    
+                    // Navigate to the new page
+                    window.location.href = 'map_display.html';
+
+                } else {
+                    const errorMessage = data.message || 'An unknown error occurred.';
+                    alert(`Error from server: ${errorMessage}`);
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`An error occurred while fetching the routes: ${error}`);
+            }
+        });
+    });
+    </script>
+</body>
+</html>

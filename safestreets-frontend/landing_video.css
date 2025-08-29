@@ -1,0 +1,27 @@
+/* landing_video.css */
+
+/* Video background properties */
+#bgvid {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: -100; /* Moves the video behind all other content */
+    background-size: cover;
+    background-position: center;
+}
+
+/* Optional: Add a subtle overlay to the video for better text readability */
+.hero-container:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4); /* 40% black overlay */
+    z-index: -99;
+}
