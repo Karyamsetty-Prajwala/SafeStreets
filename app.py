@@ -811,7 +811,7 @@ def get_routes_with_safety():
         "message": "Routes and safety scores generated.",
         "routes": routes_to_return
     })
-    @app.route('/<path:path>')
+@app.route('/<path:path>')
 def send_static(path):
     return send_from_directory('.', path)
 
