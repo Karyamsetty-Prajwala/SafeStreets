@@ -151,6 +151,55 @@ init_db_pool()
 # -----------------------------
 # Rest of your app.py (routes, ML model, etc.)
 # -----------------------------
+# -----------------------------
+# API Route: Login User
+# -----------------------------
+@app.route('/api/login', methods=['POST'])
+def login_user():
+    global db_pool
+    if db_pool is None:
+        init_db_pool()
+    if db_pool is None:
+        return jsonify({"status": "error", "message": "Database pool not initialized."}), 500
+
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    if not all([email, password]):
+        return jsonify({"status": "error", "message": "Email and password are required."}), 400
+
+    conn, cur = None, None
+    try:
+        conn = db_pool.getconn()
+        cur = conn.cursor()
+
+        # Fetch user record
+        cur.execute("SELECT user_id, name, email, password_hash FROM users WHERE email = %s;", (email,))
+        user_record = cur.fetchone()
+
+        if not user_record:
+            return jsonify({"status": "error", "message": "Invalid email or password."}), 401
+
+        # Verify password
+        if check_password_hash(user_record[3], password):
+            return jsonify({
+                "status": "success",
+                "message": "Login successful!",
+                "user_id": user_record[0],
+                "username": user_record[1],
+                "email": user_record[2]
+            }), 200
+        else:
+            return jsonify({"status": "error", "message": "Invalid email or password."}), 401
+
+    except Exception as e:
+        if conn: conn.rollback()
+        print(f"❌ Error during login: {e}")
+        return jsonify({"status": "error", "message": f"An error occurred during login: {e}"}), 500
+    finally:
+        if cur: cur.close()
+        if conn: db_pool.putconn(conn)
 
 
 # -----------------------------
