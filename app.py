@@ -168,7 +168,7 @@ def home():
     return send_from_directory('.', 'landing.html')
 
 @app.route('/<path:path>')
-def send_static(path):
+def serve_static_files(path):
     return send_from_directory('.', path)
 
 # -----------------------------
@@ -638,12 +638,3 @@ def get_routes_with_safety():
 
 if __name__ == '__main__':
     app.run(debug=True, port=os.getenv('PORT', 5000))
-
-# New routes to serve front-end files
-@app.route('/<path:path>')
-def send_static(path):
-    return send_from_directory('.', path)
-
-@app.route('/')
-def home():
-    return send_from_directory('.', 'landing.html')
