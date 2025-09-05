@@ -3,6 +3,6 @@ psycopg2-binary
 Flask-Cors
 python-dotenv
 googlemaps
-scikit-learn
+scikit-learn==1.7.1
 pandas
 gunicorn
