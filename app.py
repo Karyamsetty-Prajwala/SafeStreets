@@ -1,80 +1,157 @@
 import os
 import json
 from flask import Flask, jsonify, request, send_from_directory
-from flask_cors import CORS
 from dotenv import load_dotenv
 import psycopg2
-from psycopg2 import pool
+import psycopg2.pool
 import joblib
 import pandas as pd
+from datetime import datetime
 import numpy as np
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_cors import CORS
 import googlemaps
-from datetime import datetime
 import random
+from urllib.parse import urlparse
 
-# -----------------------------
 # Load environment variables
-# -----------------------------
-load_dotenv()  # Only used for local development
+load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
-
-# -----------------------------
-# Flask app
-# -----------------------------
 app = Flask(__name__)
 CORS(app)
 
-# -----------------------------
-# Google Maps client
-# -----------------------------
+# Google Maps API client
+GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 gmaps = None
 if GOOGLE_MAPS_API_KEY:
     try:
         gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
         print("✅ Google Maps API client initialized.")
     except Exception as e:
-        print(f"❌ Google Maps API client initialization failed: {e}")
+        print(f"❌ Error initializing Google Maps API client: {e}")
+        gmaps = None
 else:
-    print("⚠️ GOOGLE_MAPS_API_KEY not set. Route functionality will be mocked.")
+    print("⚠️ GOOGLE_MAPS_API_KEY not found. Route functionality will be mocked.")
 
-# -----------------------------
-# Database Pool
-# -----------------------------
+# Database Connection Pool
 db_pool = None
 
 def init_db_pool():
     global db_pool
-    if db_pool is not None:
-        return
-    if not DATABASE_URL:
-        print("❌ DATABASE_URL not set in environment variables.")
-        return
-    try:
-        db_pool = psycopg2.pool.SimpleConnectionPool(
-            minconn=1,
-            maxconn=10,
-            dsn=DATABASE_URL
-        )
-        print("✅ Database pool initialized.")
-    except Exception as e:
-        print(f"❌ Failed to initialize database pool: {e}")
-        db_pool = None
+    if db_pool is None:
+        try:
+            DATABASE_URL = os.getenv('DATABASE_URL')
+            if not DATABASE_URL:
+                raise ValueError("DATABASE_URL environment variable is not set.")
+            url = urlparse(DATABASE_URL)
+            db_pool = psycopg2.pool.SimpleConnectionPool(
+                minconn=1,
+                maxconn=10,
+                user=url.username,
+                password=url.password,
+                host=url.hostname,
+                port=url.port,
+                database=url.path[1:]
+            )
+            print("✅ PostgreSQL connection pool initialized!")
 
-init_db_pool()
+            # Initialize tables automatically
+            create_tables()
+        except Exception as e:
+            print(f"❌ Error initializing database pool: {e}")
+            db_pool = None
+
+def create_tables():
+    """Automatically create missing tables if they don't exist."""
+    global db_pool
+    if db_pool is None:
+        print("Database pool not initialized. Cannot create tables.")
+        return
+
+    conn = None
+    cur = None
+    try:
+        conn = db_pool.getconn()
+        cur = conn.cursor()
+
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            phone VARCHAR(10) NOT NULL,
+            gender VARCHAR(10) NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+        """)
+
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS route_history (
+            route_id SERIAL PRIMARY KEY,
+            user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+            source_lat FLOAT NOT NULL,
+            source_lng FLOAT NOT NULL,
+            destination_lat FLOAT NOT NULL,
+            destination_lng FLOAT NOT NULL,
+            selected_route JSON NOT NULL,
+            request_time TIMESTAMP DEFAULT NOW()
+        );
+        """)
+
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS crime_logs (
+            crime_id SERIAL PRIMARY KEY,
+            latitude FLOAT NOT NULL,
+            longitude FLOAT NOT NULL,
+            severity_score FLOAT,
+            crowd_density FLOAT,
+            is_safe_route BOOLEAN,
+            crime_type VARCHAR(255)
+        );
+        """)
+
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS feedback (
+            feedback_id SERIAL PRIMARY KEY,
+            user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+            segment_id INT,
+            rating INT,
+            comment TEXT,
+            submitted_at TIMESTAMP DEFAULT NOW()
+        );
+        """)
+
+        conn.commit()
+        print("✅ All tables are initialized successfully!")
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        print(f"❌ Error creating tables: {e}")
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            db_pool.putconn(conn)
 
 @app.teardown_appcontext
 def close_db_pool(exception=None):
     global db_pool
-    if db_pool:
+    if db_pool is not None:
         try:
             db_pool.closeall()
-            print("Database pool closed.")
+            print("PostgreSQL connection pool closed.")
             db_pool = None
         except Exception as e:
             print(f"Error closing database pool: {e}")
+
+# Initialize DB pool when app starts
+init_db_pool()
+
+# -----------------------------
+# Rest of your app.py (routes, ML model, etc.)
+# -----------------------------
+
 
 # -----------------------------
 # ML Model
