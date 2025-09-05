@@ -12,7 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
 import googlemaps
 import random
-from urllib.parse import urlparse
+
 # Load environment variables
 load_dotenv()
 
@@ -34,29 +34,25 @@ else:
 
 # Database Connection Pool
 db_pool = None
+
 def init_db_pool():
     global db_pool
     if db_pool is None:
         try:
-            # Get the DATABASE_URL provided by Render
-            DATABASE_URL = os.getenv('DATABASE_URL')
-            if DATABASE_URL is None:
-                raise ValueError("DATABASE_URL environment variable is not set.")
-            
-            url = urlparse(DATABASE_URL)
             db_pool = psycopg2.pool.SimpleConnectionPool(
                 minconn=1,
                 maxconn=10,
-                user=url.username,
-                password=url.password,
-                host=url.hostname,
-                port=url.port,
-                database=url.path[1:]
+                user=os.getenv('DB_USER'),
+                password=os.getenv('DB_PASSWORD'),
+                host=os.getenv('DB_HOST'),
+                port=os.getenv('DB_PORT'),
+                database=os.getenv('DB_DATABASE')
             )
             print("Successfully initialized PostgreSQL connection pool!")
         except Exception as e:
             print(f"Error initializing database pool: {e}")
             db_pool = None
+
 @app.teardown_appcontext
 def close_db_pool(exception=None):
     global db_pool
@@ -165,18 +161,7 @@ def get_nearby_crime_data(lat, lon, radius_km=0.5):
         if conn: db_pool.putconn(conn)
 
 # -----------------------------
-# Web Routes (Front End)
-# -----------------------------
-@app.route('/')
-def home():
-    return send_from_directory('.', 'landing.html')
-
-@app.route('/<path:path>')
-def serve_static_files(path):
-    return send_from_directory('.', path)
-
-# -----------------------------
-# API Routes (Backend)
+# API Routes
 # -----------------------------
 @app.route('/api/save_selected_route', methods=['POST'])
 def save_selected_route():
@@ -246,12 +231,15 @@ def get_route_history(user_id):
         history = []
         for r in rows:
             try:
+                # Retrieve coordinates from the row
                 source_lat, source_lng = r[1], r[2]
                 dest_lat, dest_lng = r[3], r[4]
 
+                # Convert coordinates to human-readable addresses
                 source_address = get_address_from_coords(source_lat, source_lng)
                 destination_address = get_address_from_coords(dest_lat, dest_lng)
 
+                # Assuming r[5] is the selected_route JSON data
                 selected_route_data = r[5]
 
                 history.append({
@@ -271,6 +259,175 @@ def get_route_history(user_id):
     finally:
         if cur: cur.close()
         if conn: db_pool.putconn(conn)
+@app.route('/api/create_tables')
+def create_tables():
+    """
+    Drops existing tables and recreates them with the correct schema,
+    including foreign key constraints.
+    """
+    conn = None
+    cur = None
+    try:
+        if db_pool is None: init_db_pool()
+        if db_pool is None: return jsonify({"status": "error", "message": "Database pool not initialized."}), 500
+        
+        conn = db_pool.getconn()
+        if conn is None: raise Exception("Failed to get a connection from the pool.")
+        
+        cur = conn.cursor()
+        
+        # Drop tables in a safe order to avoid foreign key conflicts
+        cur.execute("DROP TABLE IF EXISTS route_history CASCADE;")
+        cur.execute("DROP TABLE IF EXISTS feedback CASCADE;")
+        cur.execute("DROP TABLE IF EXISTS crime_logs CASCADE;")
+        cur.execute("DROP TABLE IF EXISTS users CASCADE;")
+
+        # Create tables
+        cur.execute("""
+            CREATE TABLE users (
+                user_id SERIAL PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                email VARCHAR(150) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                phone VARCHAR(10) NOT NULL,
+                gender VARCHAR(10) NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                last_login TIMESTAMP WITH TIME ZONE
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE crime_logs (
+                id SERIAL PRIMARY KEY,
+                latitude DECIMAL(9, 6) NOT NULL,
+                longitude DECIMAL(9, 6) NOT NULL,
+                severity_score DECIMAL(5, 2),
+                crowd_density INTEGER,
+                is_safe_route BOOLEAN,
+                crime_type VARCHAR(50),
+                reported_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        
+        cur.execute("""
+            CREATE TABLE feedback (
+                feedback_id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                segment_id INTEGER NOT NULL,
+                rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+                comment TEXT,
+                submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE route_history (
+                route_id SERIAL PRIMARY KEY,
+                user_id INT NOT NULL,
+                source_lat DECIMAL(9,6) NOT NULL,
+                source_lng DECIMAL(9,6) NOT NULL,
+                destination_lat DECIMAL(9,6) NOT NULL,
+                destination_lng DECIMAL(9,6) NOT NULL,
+                request_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                selected_route JSON NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+            );
+        """)
+
+        conn.commit()
+        print("Database tables created or already exist.")
+        return jsonify({"status": "success", "message": "Database tables created or already exist."}), 200
+    except Exception as e:
+        if conn: conn.rollback()
+        print(f"Error creating tables: {e}")
+        return jsonify({"status": "error", "message": f"Error creating tables: {e}"}), 500
+    finally:
+        if cur: cur.close()
+        if conn: db_pool.putconn(conn)
+
+@app.route('/api/user_data/<username>', methods=['GET'])
+def get_user_data(username):
+    """
+    Fetches comprehensive user data including profile details, ride history, and feedback.
+    """
+    if db_pool is None:
+        init_db_pool()
+    if db_pool is None:
+        return jsonify({"status": "error", "message": "Database pool not initialized."}), 500
+
+    conn, cur = None, None
+    try:
+        conn = db_pool.getconn()
+        cur = conn.cursor()
+
+        # 1. Fetch user details by username
+        cur.execute("""
+            SELECT user_id, name, email, phone, gender, created_at, last_login 
+            FROM users WHERE name = %s;
+        """, (username,))
+        user_record = cur.fetchone()
+
+        if not user_record:
+            return jsonify({"status": "error", "message": "User not found."}), 404
+
+        user_data = {
+            "user_id": user_record[0],
+            "name": user_record[1],
+            "email": user_record[2],
+            "phone": user_record[3],
+            "gender": user_record[4],
+            "created_at": user_record[5].isoformat() if user_record[5] else None,
+            "last_login": user_record[6].isoformat() if user_record[6] else None
+        }
+
+        # 2. Fetch recent ride history for this user
+        cur.execute("""
+            SELECT source_lat, source_lng, destination_lat, destination_lng, request_time
+            FROM route_history
+            WHERE user_id = %s
+            ORDER BY request_time DESC
+            LIMIT 5;
+        """, (user_data['user_id'],))
+        ride_history_records = cur.fetchall()
+
+        ride_history = [
+            {
+                "start": f"{r[0]}, {r[1]}",
+                "end": f"{r[2]}, {r[3]}",
+                "date": r[4].isoformat()
+            } for r in ride_history_records
+        ]
+        user_data["ride_history"] = ride_history
+        
+        # 3. Fetch recent feedback for this user
+        cur.execute("""
+            SELECT rating, comment, submitted_at
+            FROM feedback
+            WHERE user_id = %s
+            ORDER BY submitted_at DESC
+            LIMIT 5;
+        """, (user_data['user_id'],))
+        feedback_records = cur.fetchall()
+        feedback_list = [
+            {
+                "rating": r[0],
+                "comment": r[1],
+                "submitted_at": r[2].isoformat()
+            } for r in feedback_records
+        ]
+        user_data["feedback"] = feedback_list
+
+        return jsonify({"status": "success", "user": user_data}), 200
+
+    except Exception as e:
+        print(f"Error fetching user data: {e}")
+        return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
+    finally:
+        if cur: cur.close()
+        if conn: db_pool.putconn(conn)
+# In app.py, add this new function below your imports
+# In app.py, add this new function below your imports
 def get_address_from_coords(lat, lng):
     """
     Uses Google Maps Geocoding API to get a human-readable address
@@ -278,9 +435,11 @@ def get_address_from_coords(lat, lng):
     """
     global gmaps
     if not gmaps:
+        # Return coordinates if the API client is not initialized
         return f"Lat: {lat}, Lng: {lng}"
     
     try:
+        # Use result_type='locality' to get a good place name, or leave it for a full address
         reverse_geocode_result = gmaps.reverse_geocode((lat, lng))
         if reverse_geocode_result:
             return reverse_geocode_result[0]['formatted_address']
@@ -294,6 +453,7 @@ def get_address_from_coords(lat, lng):
 def load_crime_data():
     """
     Loads crime data from a JSON payload into the crime_logs table.
+    Expects a list of crime objects in the request body.
     """
     if db_pool is None: init_db_pool()
     if db_pool is None: return jsonify({"status": "error", "message": "Database pool not initialized."}), 500
@@ -337,6 +497,7 @@ def load_crime_data():
         if cur: cur.close()
         if conn: db_pool.putconn(conn)
 
+# In app.py, replace the existing save_feedback function with this:
 @app.route('/api/save_feedback', methods=['POST'])
 def save_feedback():
     data = request.json
@@ -374,6 +535,7 @@ def save_feedback():
         if cur: cur.close()
         if conn: db_pool.putconn(conn)
 
+# In app.py, replace the existing get_feedback function with this:
 @app.route('/api/get_feedback/<int:user_id>', methods=['GET'])
 def get_feedback(user_id):
     conn = None
@@ -401,7 +563,7 @@ def get_feedback(user_id):
                 "segment_id": r[2],
                 "rating": r[3],
                 "comment": r[4],
-                "submitted_at": r[5].isoformat() if r[5] else None
+                "submitted_at": r[5].isoformat() if r[5] else None # Handles NULL submitted_at
             })
         
         return jsonify({"feedback": feedback_list}), 200
@@ -501,6 +663,7 @@ def register_user():
     finally:
         if cur: cur.close()
         if conn: db_pool.putconn(conn)
+
 
 @app.route('/api/login', methods=['POST'])
 def login_user():
@@ -642,3 +805,11 @@ def get_routes_with_safety():
 
 if __name__ == '__main__':
     app.run(debug=True, port=os.getenv('PORT', 5000))
+
+@app.route('/<path:path>')
+def send_static(path):
+    return send_from_directory('.', path)
+
+@app.route('/')
+def home():
+    return send_from_directory('.', 'landing.html')
