@@ -811,6 +811,8 @@ def get_routes_with_safety():
         "message": "Routes and safety scores generated.",
         "routes": routes_to_return
     })
+if __name__ == '__main__':
+    app.run(debug=True, port=os.getenv('PORT', 5000))
 @app.route('/<path:path>')
 def send_static(path):
     return send_from_directory('.', path)
@@ -818,7 +820,3 @@ def send_static(path):
 @app.route('/')
 def home():
     return send_from_directory('.', 'landing.html')
-
-
-if __name__ == '__main__':
-    app.run(debug=True, port=os.getenv('PORT', 5000))
