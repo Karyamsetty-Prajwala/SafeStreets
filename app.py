@@ -12,6 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
 import googlemaps
 import random
+from flask import Flask, jsonify, request, send_from_directory
 
 # Load environment variables
 load_dotenv()
@@ -811,6 +812,13 @@ def get_routes_with_safety():
         "message": "Routes and safety scores generated.",
         "routes": routes_to_return
     })
+@app.route('/<path:path>')
+def send_static(path):
+    return send_from_directory('.', path)
+
+@app.route('/')
+def home():
+    return send_from_directory('.', 'landing.html')
 
 
 if __name__ == '__main__':
