@@ -40,7 +40,7 @@ def init_db_pool():
     if db_pool is None:
         try:
             # Parse the DATABASE_URL provided by Render
-            DATABASE_URL = os.getenv("postgresql://safestreets_db_user:BDGVKWdizgPz8WBrgqS2HlxUxLT1ecIQ@dpg-d2tclsmuk2gs73coglng-a/safestreets_db")
+            DATABASE_URL = os.getenv('DATABASE_URL')
             if DATABASE_URL is None:
                 raise ValueError("DATABASE_URL environment variable is not set.")
             
