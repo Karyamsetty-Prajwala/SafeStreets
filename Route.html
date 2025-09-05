@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Route Map & Safety Score</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.css"/>
+<style>
+/* --- Global & Body Styles --- */
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    flex-direction: column;
+    color: #333;
+}
+
+#bg-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: -10;
+    filter: brightness(0.6) blur(2px);
+}
+
+.main-header {
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    padding: 15px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 1000;
+}
+
+.logo {
+    font-size: 1.8em;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.main-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+.main-nav ul li {
+    margin-left: 30px;
+}
+
+.main-nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95em;
+    transition: color 0.3s ease;
+}
+
+.main-nav ul li a:hover {
+    color: #ffd700;
+}
+
+.glass-container {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px) brightness(1.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 50px;
+    margin: 30px auto;
+    max-width: 1200px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+    animation: fadeIn 1s ease-out;
+}
+
+.dashboard-content-wrapper {
+    width: 100%;
+    margin: 0 auto;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: transparent;
+    backdrop-filter: none;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.dashboard-header h1 {
+    color: #fff;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+    font-size: 2.5em;
+    margin-bottom: 5px;
+}
+
+.route-options-wrapper {
+    width: 100%;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.route-options {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+}
+
+.route-card {
+    background-color: #f7f9fc;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 20px;
+    width: 250px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.route-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.route-card.selected {
+    border-color: #6a11cb;
+    box-shadow: 0 4px 15px rgba(106, 17, 203, 0.4);
+    transform: scale(1.03);
+}
+
+.route-card h4 {
+    margin: 0 0 10px;
+    font-size: 1.2em;
+    font-weight: 600;
+}
+
+.route-card p {
+    margin: 5px 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.score {
+    font-weight: 600;
+    font-size: 1em;
+}
+
+.route-card {
+    border-left: 8px solid var(--route-card-color, transparent);
+}
+
+.route-card.high-safety {
+    border-left-color: #51B855;
+}
+
+.route-card.medium-safety {
+    border-left-color: #F39C12;
+}
+
+.route-card.low-safety {
+    border-left-color: #E74C3C;
+}
+
+.route-card.safest-path {
+    background-color: #e8f5e9;
+    border: 2px solid #51B855;
+    box-shadow: 0 0 15px rgba(81, 184, 85, 0.6);
+}
+
+.route-card.safest-path h4 {
+    color: #337a35;
+}
+
+.score .high-safety {
+    color: #51B855;
+}
+
+.score .medium-safety {
+    color: #F39C12;
+}
+
+.score .low-safety {
+    color: #E74C3C;
+}
+
+.map-and-details-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 20px;
+}
+
+.map-placeholder {
+    width: 100%;
+    height: 500px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+#mapid {
+    height: 100%;
+    width: 100%;
+}
+
+.details-panel {
+    background-color: #f7f9fc;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.details-panel h2 {
+    font-size: 1.8em;
+    margin-bottom: 15px;
+    color: #2575fc;
+}
+
+.details-panel .safety-score, .details-panel .safety-detail {
+    font-size: 1.2em;
+    color: #6a11cb;
+    margin-bottom: 10px;
+}
+
+.details-panel .safety-detail {
+    font-size: 1em;
+    color: #555;
+}
+
+.route-button {
+    background-color: #9b59b6;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1em;
+    margin-top: 20px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.route-button:hover {
+    background-color: #8e44ad;
+    transform: translateY(-2px);
+}
+
+.emergency-contacts {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 30px;
+    width: 100%;
+    max-width: 600px;
+}
+
+.emergency-contacts h3 {
+    margin-top: 0;
+    color: #6a11cb;
+}
+
+.emergency-contacts ul {
+    list-style: none;
+    padding: 0;
+}
+
+.emergency-contacts li {
+    margin-bottom: 10px;
+    font-size: 1em;
+}
+
+.emergency-contacts a {
+    color: #2575fc;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.back-button {
+    margin-top: 30px;
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #2575fc;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+    background-color: #6a11cb;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .dashboard-content-wrapper {
+        width: 95%;
+        padding: 20px;
+        margin: 20px auto;
+    }
+    .route-options-wrapper {
+        flex-direction: column;
+        align-items: center;
+    }
+    .route-card {
+        width: 100%;
+        max-width: 300px;
+    }
+    .map-and-details-wrapper {
+        flex-direction: column;
+    }
+}
+</style>
+</head>
+<body>
+
+<video playsinline autoplay muted loop id="bg-video">
+    <source src="Video.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
+
+<header class="main-header">
+    <div class="logo">SafeStreets</div>
+    <nav class="main-nav">
+        <ul>
+            <li><a href="landing.html">HOME</a></li>
+            <li><a href="dashboard.html">DASHBOARD</a></li>
+            <li><a href="index.html">LOGOUT</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="glass-container">
+    <div class="dashboard-content-wrapper">
+        <div class="dashboard-header">
+            <h1 id="pageTitle">Your Route Options</h1>
+            <p>Click on a route to see details and highlight it on the map.</p>
+        </div>
+
+        <div class="route-options-wrapper">
+            <div class="route-options" id="routeOptionsContainer">
+                <p class="initial-message">Loading route options...</p>
+            </div>
+        </div>
+        
+        <div class="safest-path-display-wrapper">
+          <div id="safestPathContainer"></div>
+        </div>
+
+        <div class="map-and-details-wrapper">
+            <div class="map-placeholder">
+                <div id="mapid"></div>
+            </div>
+
+            <div class="details-panel">
+                <h2 id="selectedRouteName"></h2>
+                <div class="safety-score" id="selectedRouteSafety">Safety Score: N/A</div>
+                <div class="safety-detail" id="selectedRouteDetails">
+                    <p>Select a route card to view details.</p>
+                </div>
+                <button id="showHeatmapBtn" class="route-button">Show Crime Heatmap</button>
+            </div>
+        </div>
+
+        <div class="emergency-contacts">
+            <h3>Emergency Contact Information</h3>
+            <ul>
+                <li><strong>Police/SOS:</strong> <a href="tel:112">112</a> (All-in-one emergency number in India)</li>
+                <li><strong>Fire:</strong> <a href="tel:101">101</a></li>
+                <li><strong>Ambulance:</strong> <a href="tel:102">102</a> or <a href="tel:108">108</a></li>
+                <li><strong>Women's Helpline:</strong> <a href="tel:1091">1091</a></li>
+                <li><strong>Child Helpline:</strong> <a href="tel:1098">1098</a></li>
+                <li><strong>Cyber Crime Helpline:</strong> <a href="tel:1930">1930</a></li>
+            </ul>
+            <p class="simulation-note">Please use these numbers only in case of a genuine emergency.</p>
+        </div>
+
+        <a href="dashboard.html" class="back-button">Go Back to Dashboard</a>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let mymap;
+        let allRoutePolylines = [];
+        let currentMarkers = [];
+        let crimeHeatmapLayer = null;
+        let routesArray = [];
+
+        function initMap() {
+            if (mymap) mymap.remove();
+            mymap = L.map('mapid').setView([12.9716, 77.5946], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(mymap);
+        }
+        initMap();
+
+        function clearMapElements() {
+            allRoutePolylines.forEach(polyline => mymap.removeLayer(polyline));
+            allRoutePolylines = [];
+            currentMarkers.forEach(marker => mymap.removeLayer(marker));
+            currentMarkers = [];
+            if (crimeHeatmapLayer) {
+                mymap.removeLayer(crimeHeatmapLayer);
+                crimeHeatmapLayer = null;
+            }
+        }
+
+        function getScoreInfo(score) {
+            const numScore = parseFloat(score);
+            if (numScore >= 6.5) {
+                return { class: 'high-safety', color: '#51B855' };
+            } else if (numScore >= 5.5) {
+                return { class: 'medium-safety', color: '#F39C12' };
+            } else {
+                return { class: 'low-safety', color: '#E74C3C' };
+            }
+        }
+
+        function displayRoutes(routes) {
+            clearMapElements();
+            const routeOptionsContainer = document.getElementById('routeOptionsContainer');
+            const safestPathContainer = document.getElementById('safestPathContainer');
+            routeOptionsContainer.innerHTML = '';
+            safestPathContainer.innerHTML = '';
+            routesArray = routes;
+
+            if (!routesArray || routesArray.length === 0) {
+                routeOptionsContainer.innerHTML = `<p class="initial-message">No route options available for this selection.</p>`;
+                const detailsPanel = document.getElementById('detailsPanel');
+                if(detailsPanel) detailsPanel.style.display = 'none';
+                mymap.setView([12.9716, 77.5946], 13);
+                return;
+            }
+
+            routesArray.sort((a, b) => parseFloat(b.safetyScore) - parseFloat(a.safetyScore));
+
+            routesArray.forEach((route, index) => {
+                const routeCard = document.createElement('div');
+                routeCard.classList.add('route-card');
+                routeCard.dataset.routeId = index;
+
+                const scoreInfo = getScoreInfo(route.safetyScore);
+                routeCard.classList.add(scoreInfo.class);
+
+                let name = `Route ${index + 1}`;
+                if (index === 0) {
+                    name = `Safest Path`;
+                    routeCard.classList.add('safest-path');
+                    safestPathContainer.appendChild(routeCard);
+                } else {
+                    routeOptionsContainer.appendChild(routeCard);
+                }
+                
+                routeCard.innerHTML = `
+                    <h4>${name}</h4>
+                    <p>Duration: ${route.duration} | Distance: ${route.distance}</p>
+                    <p class="score">Safety: <span class="${scoreInfo.class}">${parseFloat(route.safetyScore).toFixed(2)}/10</span></p>
+                `;
+                
+
+                const polyline = L.polyline(route.coordinates, {
+                    color: scoreInfo.color,
+                    weight: 5,
+                    opacity: 0.7
+                }).addTo(mymap);
+                allRoutePolylines.push(polyline);
+                
+                routeCard.addEventListener('click', () => {
+                    selectRoute(routesArray[index], allRoutePolylines[index], index);
+                });
+            });
+
+            if (routesArray.length > 0) {
+                selectRoute(routesArray[0], allRoutePolylines[0], 0);
+            }
+        }
+
+        function selectRoute(route, polylineLayer, routeId) {
+            document.querySelectorAll('.route-card').forEach(card => card.classList.remove('selected'));
+            document.querySelector(`.route-card[data-routeId="${routeId}"]`).classList.add('selected');
+            
+            document.getElementById('selectedRouteName').innerHTML = route.name;
+            document.getElementById('selectedRouteSafety').innerHTML = `Safety Score: <span class="${getScoreInfo(route.safetyScore).class}">${parseFloat(route.safetyScore).toFixed(2)}/10</span>`;
+            document.getElementById('selectedRouteDetails').innerHTML = `<p>${route.safetyDetails}</p>`;
+
+            allRoutePolylines.forEach((pl, idx) => {
+                const scoreInfo = getScoreInfo(routesArray[idx].safetyScore);
+                if (idx === routeId) {
+                    pl.setStyle({ weight: 7, opacity: 1, color: scoreInfo.color });
+                } else {
+                    pl.setStyle({ weight: 5, opacity: 0.7, dashArray: '5, 10', color: scoreInfo.color });
+                }
+            });
+
+            currentMarkers.forEach(marker => mymap.removeLayer(marker));
+            currentMarkers = [];
+            const startCoord = route.coordinates[0];
+            const endCoord = route.coordinates[route.coordinates.length - 1];
+
+            L.marker(startCoord).addTo(mymap)
+                .bindPopup(`<b>Start:</b> ${route.name}`).openPopup();
+            L.marker(endCoord).addTo(mymap)
+                .bindPopup(`<b>End:</b> ${route.name}`);
+            currentMarkers.push(L.marker(startCoord), L.marker(endCoord));
+
+            mymap.fitBounds(polylineLayer.getBounds());
+        }
+
+        const routesData = [
+            {
+                name: 'Route 1',
+                duration: '49 mins',
+                distance: '21.5 km',
+                safetyScore: 5.86,
+                coordinates: [[12.978, 77.585], [12.975, 77.595], [12.970, 77.600], [12.965, 77.590]],
+                safetyDetails: 'This is a well-lit route with low crime rates during most hours.'
+            },
+            {
+                name: 'Route 2',
+                duration: '49 mins',
+                distance: '21.2 km',
+                safetyScore: 5.31,
+                coordinates: [[12.978, 77.585], [12.973, 77.598], [12.968, 77.605], [12.965, 77.590]],
+                safetyDetails: 'This route has some medium-risk sections but is generally safe.'
+            },
+            {
+                name: 'Route 3',
+                duration: '38 mins',
+                distance: '17.7 km',
+                safetyScore: 5.39,
+                coordinates: [[12.978, 77.585], [12.970, 77.590], [12.965, 77.588], [12.965, 77.590]],
+                safetyDetails: 'This is the shortest route but has some isolated sections, use caution at night.'
+            }
+        ];
+
+        const storedPredictionData = localStorage.getItem('routePredictionData');
+        const storedPreference = localStorage.getItem('selectedRoutePreference');
+        if (storedPredictionData && storedPreference) {
+            const parsedData = JSON.parse(storedPredictionData);
+            displayRoutes(parsedData.routes);
+            localStorage.removeItem('routePredictionData');
+            localStorage.removeItem('selectedRoutePreference');
+        } else {
+            displayRoutes(routesData);
+        }
+
+        const showHeatmapBtn = document.getElementById('showHeatmapBtn');
+        if (showHeatmapBtn) {
+            showHeatmapBtn.addEventListener('click', () => {
+                if (crimeHeatmapLayer) {
+                    mymap.removeLayer(crimeHeatmapLayer);
+                    crimeHeatmapLayer = null;
+                    showHeatmapBtn.innerText = 'Show Crime Heatmap';
+                    return;
+                }
+
+                const heatmapData = [
+                    [12.9721, 77.5936, 0.8], [12.9750, 77.6000, 1.0], [12.9650, 77.5850, 0.5],
+                    [12.9800, 77.5900, 0.7], [12.9550, 77.5700, 0.3], [12.9700, 77.6100, 0.9],
+                    [12.9780, 77.5800, 0.6], [12.9600, 77.6050, 0.75], [12.9500, 77.5900, 0.4],
+                    [12.9850, 77.6200, 0.95], [12.9730, 77.5890, 0.88], [12.9710, 77.5980, 0.92]
+                ];
+                if (typeof L.heatLayer !== 'undefined') {
+                    crimeHeatmapLayer = L.heatLayer(heatmapData, { radius: 25, blur: 15, maxZoom: 17 }).addTo(mymap);
+                    showHeatmapBtn.innerText = 'Hide Crime Heatmap';
+                } else {
+                    console.error("Leaflet.heat plugin is not loaded. Cannot display heatmap.");
+                    alert("Heatmap functionality is not available. Please check the Leaflet.heat plugin script inclusion.");
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,439 @@
+/* --- Core Styles & Typography --- */
+:root {
+    --primary-color: #2575fc;
+    --secondary-color: #6a11cb;
+    --text-color-dark: #111;
+    --text-color-light: #fff;
+    --bg-overlay: rgba(0, 0, 0, 0.4);
+    --glass-bg: rgba(255, 255, 255, 0.15);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --card-bg: #fff;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    --logo-color: #FFD700; /* Added a new variable for the logo color */
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: var(--text-color-dark);
+    text-align: center;
+    overflow-x: hidden;
+    background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
+    position: relative;
+    z-index: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    z-index: -9;
+}
+
+#bg-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: -10;
+    filter: brightness(0.6) blur(2px);
+}
+
+
+h1, h2, h3, h4 {
+    color: var(--text-color-light);
+    font-weight: 700;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+h1 { font-size: 3em; }
+h2 { font-size: 2.5em; }
+h3 { font-size: 1.8em; }
+
+/* --- General Layout & Glassmorphism --- */
+.page-section {
+    width: 100%;
+    max-width: 1200px;
+    padding: 60px 20px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.glass-container {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px) brightness(1.2);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 50px;
+    margin: 30px auto;
+    max-width: 1000px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+    animation: fadeIn 1s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Login Form --- */
+.login-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin: 20px auto;
+    max-width: 400px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 14px 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1.5em;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.8);
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 8px var(--primary-color);
+    outline: none;
+}
+
+button {
+    padding: 14px 25px;
+    border: none;
+    background: linear-gradient(45deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.5em;
+    font-weight: bold;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    margin-top: 25px;
+}
+
+button:hover {
+    background: linear-gradient(-45deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+}
+
+.login-links {
+    margin-top: 25px;
+    font-size: 1.1em;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.login-links a {
+    color: var(--text-color-lightA);
+    text-decoration: none;
+    margin: 0 10px;
+    transition: color 0.3s ease;
+}
+
+.login-links a:hover {
+    color: #ffd700;
+    text-decoration: underline;
+}
+
+/* --- Features Section --- */
+.about-safestreets {
+    text-align: center;
+    color: var(--text-color-light);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    padding: 0 10%;
+    line-height: 1.8;
+}
+
+.features-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.feature-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 30px;
+    flex: 1 1 280px;
+    max-width: 300px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    text-align: left;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+}
+
+.feature-card h3 {
+    margin-top: 0;
+    color: var(--secondary-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* --- Team Section --- */
+.team-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 40px;
+    margin-top: 30px;
+}
+
+.team-member {
+    text-align: center;
+    max-width: 200px;
+}
+
+.team-member img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--primary-color);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease;
+}
+
+.team-member img:hover {
+    transform: scale(1.1);
+}
+
+.team-member h4 {
+    margin: 15px 0 5px;
+    color: var(--text-color-light);
+}
+.team-member p {
+    color: var(--text-color-light);
+}
+
+/* --- Reviews Section --- */
+.review-carousel {
+    max-width: 700px;
+    margin: 0 auto;
+    position: relative;
+    padding: 20px;
+    min-height: 100px;
+}
+
+.review {
+    display: none;
+    font-style: italic;
+    font-size: 1.2em;
+    color: var(--text-color-light);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.review.active {
+    display: block;
+    animation: fade 1s ease-in-out;
+}
+
+/* --- Utility Classes --- */
+.hidden {
+    display: none;
+}
+.message.error { color: red; }
+.message.success { color: green; }
+
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+    .glass-container {
+        padding: 30px;
+    }
+    .page-section {
+        padding: 40px 10px;
+    }
+    h1 { font-size: 2em; }
+    h2 { font-size: 1.5em; }
+    .about-safestreets {
+        padding: 0 5%;
+    }
+    .main-header {
+        flex-direction: column;
+        padding: 10px;
+    }
+    .main-nav ul {
+        margin-top: 10px;
+    }
+}
+/* --- Sidebar --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 240px;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            color: var(--text-color-light);
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .sidebar h2 {
+            font-size: 2em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .sidebar ul li {
+            margin: 15px 0;
+        }
+
+        .sidebar ul li a {
+            text-decoration: none;
+            color: var(--text-color-light);
+            font-weight: 500;
+            font-size: 1.5em;
+            transition: color 0.3s ease;
+            display: block;
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .sidebar ul li a:hover {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+        }
+
+.main-header {
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 15px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+.logo {
+    font-size: 4em;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--logo-color); /* Changed to the new variable for yellow */
+}
+
+.main-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+.main-nav ul li {
+    margin-left: 30px;
+}
+
+.main-nav ul li a {
+    color: var(--text-color-light);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 2em;
+    transition: color 0.3s ease;
+}
+
+.main-nav ul li a:hover {
+    color: var(--primary-color);
+}
+.main-nav ul li a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 2em;
+    transition: color 0.3s ease;
+}
+
+.main-nav ul li a:hover {
+    color: var(--primary-color);
+}
+
+.form-group label {
+    font-size: 1.5em; /* You can adjust this value */
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+}
+.form-group select {
+    width: 100%;
+    padding: 12px; /* You can adjust this value */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 1.2em; /* You can adjust this value */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+
+/* Increase font size for the link text */
+.login-links a {
+    font-size: 1.5em; /* Increased from the default */
+    color: #fff;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+/* Add to your existing utility classes section */
+.message {
+    font-size: 1.2em; /* Increase font size for visibility */
+    font-weight: 600; /* Make the text bold */
+    padding: 15px 25px; /* Add space around the text */
+    border-radius: 10px; /* Give it rounded corners */
+    text-align: center;
+    margin-top: 20px; /* Add some space above the message */
+    color: var(--text-color-light); /* White text for contrast */
+}
+
+/* Style for the success message with a green background */
+.message.success {
+    background-color: #28a745; /* A strong, clear green */
+}
+
+/* Style for an error message (good to have for consistency) */
+.message.error {
+    background-color: #dc3545; /* A strong, clear red */
+}

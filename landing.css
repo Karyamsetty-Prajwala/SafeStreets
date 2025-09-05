@@ -1,0 +1,272 @@
+/* landing.css */
+
+/* --- Global & Body Styles --- */
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    /* REMOVED: background-image and other body background properties are now in landing_video.css */
+}
+
+/* --- Fixed Header --- */
+.main-header {
+    background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+    color: #fff;
+    padding: 15px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed; /* KEY: Makes it stay at the top */
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box; /* Include padding in width */
+    z-index: 1000;
+}
+
+.logo {
+    font-size: 1.8em;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.main-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+.main-nav ul li {
+    margin-left: 30px;
+}
+
+.main-nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95em;
+    transition: color 0.3s ease;
+}
+
+.main-nav ul li a:hover {
+    color: #ffd700; /* Gold on hover */
+}
+
+/* --- Hero Content Container --- */
+.hero-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #fff;
+    position: relative;
+    padding-bottom: 250px; /* Space for the overlay form to sit */
+    box-sizing: border-box;
+}
+
+.hero-content {
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+}
+
+.hero-content h1 {
+    font-size: 3.5em;
+    margin-bottom: 15px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.hero-content p {
+    font-size: 1.2em;
+    margin-bottom: 30px;
+}
+
+.explore-button {
+    background-color: #ffd700; /* Gold button */
+    color: #333;
+    padding: 15px 35px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.explore-button:hover {
+    background-color: #e6c200;
+    transform: translateY(-2px);
+}
+
+/* --- Search Form Overlay --- */
+.search-form-overlay {
+    background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+    backdrop-filter: blur(15px); /* Frosted glass effect */
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 50%); /* Centers horizontally and moves half its height down */
+    width: 90%;
+    max-width: 900px; /* Max width for the form */
+    border-radius: 10px;
+    padding: 35px;
+    box-sizing: border-box;
+    z-index: 10;
+}
+
+.search-form {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.search-form .form-group {
+    flex-grow: 1; /* Allows form groups to take equal space */
+    min-width: 150px;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.search-form label {
+    font-size: 0.9em;
+    color: #fff;
+    margin-bottom: 5px;
+    font-weight: 600;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.search-form input[type="text"],
+.search-form input[type="date"],
+.search-form input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+    font-size: 1em;
+    box-sizing: border-box;
+    background-color: rgba(255, 255, 255, 0.3);
+    color: #fff; /* White text */
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.search-form input[type="text"]:focus,
+.search-form input[type="date"]:focus,
+.search-form input[type="number"]:focus {
+    border-color: rgba(255, 255, 255, 0.8);
+    background-color: rgba(255, 255, 255, 0.5);
+    outline: none;
+}
+/* Placeholder text color */
+.search-form input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+
+.search-button {
+    background-color: #9b59b6; /* Purple search button */
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    flex-shrink: 0; /* Prevents button from shrinking on small screens */
+}
+
+.search-button:hover {
+    background-color: #8e44ad;
+    transform: translateY(-2px);
+}
+
+/* --- Footer --- */
+footer {
+    text-align: center;
+    padding: 40px;
+    color: #fff;
+    background-color: #333;
+    z-index: 100;
+    position: relative; /* KEY: Pushes it below the hero section */
+}
+
+
+/* --- Basic Responsiveness --- */
+@media (max-width: 960px) {
+    .search-form-overlay {
+        max-width: 90%;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-header {
+        flex-direction: column;
+        align-items: center;
+        padding: 10px;
+        position: relative; /* KEY: Change from fixed to relative on mobile */
+    }
+    .main-nav ul {
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        margin-top: 10px;
+    }
+    .main-nav ul li {
+        margin: 5px 0;
+    }
+    .hero-container {
+        padding-bottom: 250px;
+    }
+    .hero-content h1 {
+        font-size: 2.5em;
+    }
+    .hero-content p {
+        font-size: 1em;
+    }
+    .search-form-overlay {
+        position: relative;
+        transform: none;
+        bottom: unset;
+        width: 100%;
+        max-width: 100%;
+        border-radius: 0;
+        margin-top: -150px;
+    }
+    .search-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .form-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+    .search-form .form-group {
+        min-width: unset;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-content h1 {
+        font-size: 2em;
+    }
+    .explore-button {
+        padding: 12px 25px;
+        font-size: 1em;
+    }
+}

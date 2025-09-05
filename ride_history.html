@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ride History - SafeStreets</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #2575fc;
+            --secondary-color: #6a11cb;
+            --text-color-light: #fff;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #bg-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: -10;
+    filter: brightness(0.6) blur(2px);
+}
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            text-align: center;
+            color: var(--text-color-light);
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h1 {
+            color: var(--text-color-light);
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .history-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .history-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: left;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+
+        .history-item:hover {
+            transform: translateY(-5px);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .history-item p {
+            margin: 5px 0;
+            font-size: 1.5em;
+        }
+
+        .history-item strong {
+            color: #ffda6a;
+        }
+
+        .loading-text {
+            font-size: 1.2em;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: var(--primary-color);
+            font-weight: 600;
+            padding: 10px 20px;
+            background: var(--text-color-light);
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+        .back-link:hover {
+            background: #e0e0e0;
+        }
+     
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 240px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            color: var(--text-color-light);
+            padding: 20px 0;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+
+        .sidebar ul li {
+            margin: 15px 0;
+        }
+
+        .sidebar ul li a {
+            text-decoration: none;
+            color: var(--text-color-light);
+            font-weight: 500;
+            font-size: 1.5em;
+            transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-radius: 0 50px 50px 0;
+            position: relative;
+        }
+        
+        .sidebar ul li a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar ul li a i {
+            font-size: 1.5em;
+            margin-right: 15px;
+            width: 30px; /* fixed width for icon alignment */
+            text-align: center;
+        }
+
+        /* Active link styling */
+        .sidebar ul li a.active {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+   
+.main-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: #111; /* dark background */
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+    z-index: 1001;
+    border-bottom: 2px solid #333;
+}
+
+.logo {
+    font-size: 4em;
+    font-weight: 700;
+    color: #FFD700; /* yellow */
+}
+
+/* --- Sidebar --- */
+.sidebar {
+    position: fixed;
+    top: 60px; /* push down below header */
+    left: 0;
+    width: 240px;
+    height: calc(100% - 60px);
+    background: rgba(0, 0, 0, 0.85);
+    color: var(--text-color-light);
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+ 
+
+    </style>
+</head>
+<body>
+
+     <video playsinline autoplay muted loop id="bg-video">
+        <source src="Video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <div class="container">
+        <h1>Your Ride History</h1>
+        <ul id="rideHistoryList" class="history-list">
+            <li class="loading-text">Loading your ride history...</li>
+        </ul>
+        <a href="dashboard.html" class="back-link">← Back to Dashboard</a>
+    </div>
+        <header class="main-header">
+        <div class="logo">SafeStreets</div>
+    </header>   
+     <div class="sidebar">
+        <ul>
+            <li><a href="landing.html"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="ride_history.html" class="active"><i class="fas fa-history"></i> Ride History</a></li>
+            <li><a href="feedback.html"><i class="fas fa-comment-dots"></i> Feedback</a></li>
+            <li><a href="profile.html"><i class="fas fa-user-circle"></i> User Profile</a></li>
+            <li><a href="index.html"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const userId = localStorage.getItem('user_id');
+        const rideHistoryList = document.getElementById('rideHistoryList');
+
+        if (!userId) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/api/get_route_history/${userId}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            const history = result.history;
+
+            rideHistoryList.innerHTML = '';
+
+            if (history.length === 0) {
+                rideHistoryList.innerHTML = '<li class="loading-text">You have no recorded ride history.</li>';
+            } else {
+                history.forEach(ride => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'history-item';
+                    listItem.innerHTML = `
+                        <p><strong>Date:</strong> ${new Date(ride.request_time).toLocaleString()}</p>
+                        <p><strong>Source:</strong> ${ride.source_address}</p>
+                        <p><strong>Destination:</strong> ${ride.destination_address}</p>
+                    `;
+                    rideHistoryList.appendChild(listItem);
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching ride history:', error);
+            rideHistoryList.innerHTML = '<li class="loading-text">Could not load ride history. Please try again.</li>';
+        }
+    });
+</script>
+</body>
+</html>

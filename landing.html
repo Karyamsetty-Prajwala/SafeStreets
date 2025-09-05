@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>SafeStreets</title>
+    <link rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    
+
+   
+    <video playsinline autoplay muted loop id="bg-video">
+    <source src="Video.mp4" type="video/mp4">
+    Your browser does not support the video tag.                
+    </video>
+
+   
+
+
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>Where communities empower safety.</h1>
+            <p>
+                SafeStreets is your trusted companion for urban travel, providing real-time safety insights and optimized routes to keep you informed and secure, every step of the way.
+            </p>
+            <div class="hero-cta">
+                <a href="index.html" class="button primary-button">Explore Safer Routes</a>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="phone-mockup">
+                <video src="1.mp4" muted playsinline loop autoplay></video>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-container dark-bg curved-top">
+        <div class="content-wrapper">
+            <h2>Know Your Journey, Stay Secure.</h2>
+            <p class="description-text">
+                SafeStreets is a cutting-edge web application designed to empower urban travelers with data-driven safety intelligence.
+                Our mission is to shift the paradigm of navigation from merely efficient to proactively safe.
+                By leveraging machine learning and real-time data, SafeStreets helps you find the safest route to your destination,
+                offering peace of mind every step of the way.
+            </p>
+            <div class="visual-break large-video">
+                <video src="2.mp4" muted playsinline loop autoplay></video>
+            </div>
+        </div>
+    </section>
+
+   
+
+    <section class="section-container light-bg curved-top">
+        <div class="content-wrapper">
+            <h2>Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-shield-alt icon-large"></i>
+                    <h3>Predictive Safety Scores</h3>
+                    <p>Analyzes historical crime data to provide real-time safety scores for routes, helping you make informed decisions.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-route icon-large"></i>
+                    <h3>Safety-Optimized Routes</h3>
+                    <p>Our intelligent algorithms suggest safer paths by dynamically avoiding high-risk zones, prioritizing your well-being.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-exclamation-triangle icon-large"></i>
+                    <h3>Real-time Incident Alerts</h3>
+                    <p>Stay updated with instant notifications about incidents near your location or along your planned route.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-hands-helping icon-large"></i>
+                    <h3>Emergency Support</h3>
+                    <p>Quick-access panel for public and emergency contact numbers, ensuring help is just a tap away when you need it most.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-container dark-bg curved-top">
+        <div class="content-wrapper">
+            <h2>What Our Users Say</h2>
+            <div class="review-carousel" id="reviewCarousel">
+                <div class="review active">
+                    <i class="fas fa-quote-left quote-icon"></i>
+                    "SafeStreets helped me avoid a sketchy neighborhood. Incredible idea!"
+                    <span class="reviewer-name">— Priya R.</span>
+                </div>
+                <div class="review">
+                    <i class="fas fa-quote-left quote-icon"></i>
+                    "Love the emergency contact feature. Makes me feel safer when walking alone."
+                    <span class="reviewer-name">— Mark T.</span>
+                </div>
+                <div class="review">
+                    <i class="fas fa-quote-left quote-icon"></i>
+                    "Routes are smart and reliable. I've made it my go-to map."
+                    <span class="reviewer-name">— Jen C.</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-container light-bg curved-top">
+        <div class="content-wrapper">
+            <h2>Meet the Innovators</h2>
+            <div class="team-container">
+                <div class="team-member">
+                    <img src="prajwala.jpg" alt="Karyamsetty Prajwala" />
+                    <h4>Karyamsetty Prajwala</h4>
+                    <p>UI/UX Designer</p>
+                </div>
+                <div class="team-member">
+                    <img src="Madhu.png" alt="Madhumitha P" />
+                    <h4>Madhumitha P</h4>
+                    <p>Lead Developer</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="main-footer">
+        <div class="content-wrapper">
+            <div class="footer-logo">SafeStreets</div>
+            <p>&copy; 2025 SafeStreets. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact Us</a>
+            </div>
+            <div class="social-links">
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const reviews = document.querySelectorAll('.review');
+        let currentReview = 0;
+
+        function showNextReview() {
+            reviews.forEach(review => review.classList.remove('active'));
+            currentReview = (currentReview + 1) % reviews.length;
+            reviews[currentReview].classList.add('active');
+        }
+
+        if (reviews.length > 0) {
+            setInterval(showNextReview, 4000);
+        }
+    </script>
+</body>
+</html>

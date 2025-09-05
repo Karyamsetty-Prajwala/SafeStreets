@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Route Map & Safety Score</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA3emQ7hGvYfxVuH68wHHIwcBCFzP88y-4&libraries=visualization,geometry&callback=initMap"></script>
+    <style>
+        /* --- General Page & Layout Styles --- */
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background: linear-gradient(135deg, #71b7e6 0%, #9b59b6 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .main-header {
+            background-color: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            padding: 15px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.8em;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .main-nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        .main-nav ul li {
+            margin-left: 30px;
+        }
+
+        .main-nav ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.5em;
+            transition: color 0.3s ease;
+        }
+
+        .main-nav ul li a:hover {
+            color: #ffd700;
+        }
+
+        /* --- Glassmorphism for main container --- */
+        .dashboard-content-wrapper {
+            margin-top: 100px;
+            padding: 40px;
+            width: 100%;
+            max-width: 1100px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            color: #fff;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+            margin-bottom: 20px;
+        }
+
+        .dashboard-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+        }
+
+        /* --- Route Options and Map Display --- */
+        .route-options-wrapper,
+        .map-and-details-wrapper {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .route-options {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* --- Glassmorphism for Route Cards --- */
+        .route-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            width: 250px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            cursor: pointer;
+           
+        }
+
+        .route-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            border-color: #2575fc;
+        }
+
+        .route-card.selected {
+            border-color: #6a11cb;
+            box-shadow: 0 8px 25px rgba(106, 17, 203, 0.3);
+        }
+
+        .route-card h4 {
+            margin-top: 0;
+            color: #e0e0e0;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .route-card p {
+            margin: 5px 0;
+            color: #c0c0c0;
+        }
+
+        .route-card .score {
+            font-weight: bold;
+            font-size: 1.5.em;
+            color: #6a11cb;
+        }
+
+        .route-card .duration {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #2575fc;
+        }
+
+        /* --- Color-coding for Route Cards & Score Text --- */
+        .route-card {
+            border-left: 8px solid var(--route-card-color, transparent);
+        }
+
+        .route-card.safest-path {
+            background-color: rgba(144, 238, 144, 0.3);
+            border: 2px solid #337a35;
+            box-shadow: 0 0 20px rgba(51, 122, 53, 0.8);
+            transform: scale(1.03);
+        }
+
+        .route-card.safest-path h4 {
+            color: #337a35;
+        }
+
+        .route-card.safest-path .score span {
+            color: #337a35;
+            font-weight: 700;
+            font-size: 1.3em;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .score .high-safety {
+            color: #51B855;
+        }
+
+        .score .medium-safety {
+            color: #F39C12;
+        }
+
+        .score .low-safety {
+            color: #E74C3C;
+        }
+
+        /* --- Map and Details Panel --- */
+        .map-placeholder {
+            width: 100%;
+            height: 500px;
+            background-color: #e0e0e0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #mapid {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+        }
+
+        /* --- Glassmorphism for Emergency Contacts --- */
+        .emergency-contacts {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .emergency-contacts h3 {
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .emergency-contacts ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .emergency-contacts li {
+            margin-bottom: 10px;
+            font-size: 1.5em;
+            color: #eee;
+        }
+
+        .emergency-contacts li strong {
+            color: #fff;
+        }
+
+        .back-button {
+            background-color: #6a11cb;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.8em;
+            margin-top: 20px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .back-button:hover {
+            background-color: #2575fc;
+            transform: translateY(-2px);
+        }
+
+        .submit-btn {
+            background: linear-gradient(to right, #2575fc, #6a11cb);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.8em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(to left, #2575fc, #6a11cb);
+            transform: translateY(-2px);
+        }
+        .route-card.safest-path {
+            background-color: rgba(144, 238, 144, 0.3);
+            border: 2px solid #51B855; /* A distinct green color */
+            box-shadow: 0 0 20px rgba(51, 122, 53, 0.8);
+            transform: scale(1.03);
+        }
+
+        .route-card.safest-path h4 {
+            color: #337a35;
+        }
+
+        .route-card.safest-path .score span {
+            color: #337a35;
+            font-weight: 700;
+            font-size: 1.3em;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .main-header {
+                padding: 10px 20px;
+            }
+
+            .main-nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .main-nav ul li {
+                margin: 5px 10px;
+            }
+
+            .dashboard-content-wrapper {
+                padding: 10px;
+                flex-direction: column;
+                align-items: center;
+                max-width: 95%;
+            }
+
+            .route-card {
+                width: 100%;
+            }
+
+            .map-placeholder {
+                height: 300px;
+            }
+        }
+
+        /* --- Video Background Styling --- */
+        #bg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -10;
+            filter: brightness(0.6) blur(2px);
+        }
+
+        /* --- Semi-transparent overlay for text readability --- */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -9;
+        }
+       body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+}
+
+/* Sidebar fixed to left */
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background: #111;
+  color: #fff;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+/* Main content should shift right */
+.content {
+  margin-left: 250px; /* 👈 pushes content to the right of sidebar */
+  flex-grow: 1;
+  padding: 30px;
+  background: url('background.jpg') no-repeat center center/cover;
+  color: #333;
+  min-height: 100vh;
+}
+/* Sidebar navigation links */
+.sidebar nav a {
+  text-decoration: none;
+  color: #ddd;              /* default text color */
+  font-size: 16px;
+  font-weight: 500;
+  padding: 12px 10px;
+  margin: 4px 0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: background 0.3s, color 0.3s;
+  font-size: 1.5em;
+}
+
+.sidebar nav {
+  margin-top: 40px;     /* 👈 pushes links further down */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hover effect */
+.sidebar nav a:hover {
+  background: #333;
+  color: #FFD700;           /* gold on hover */
+}
+
+/* Remove visited/active purple */
+.sidebar nav a:visited,
+.sidebar nav a:active {
+  color: #ddd;              /* keep same as default */
+}
+
+    </style>
+</head>
+
+<body>
+    <header class="main-header">
+        <div class="logo">SafeStreets</div>
+        
+    </header>
+    
+        <video playsinline autoplay muted loop id="bg-video">
+            <source src="Video.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    
+    <div class="sidebar">
+    
+    <nav>
+      <a href="#"><i class="fa fa-home"></i> Home</a>
+      <a href="#"><i class="fa fa-chart-line"></i> Dashboard</a>
+      <a href="#"><i class="fa fa-history"></i> Ride History</a>
+      <a href="#"><i class="fa fa-comment-dots"></i> Feedback</a>
+      <a href="#"><i class="fa fa-user"></i> User Profile</a>
+      <a href="#"><i class="fa fa-sign-out-alt"></i> Logout</a>
+    </nav>
+  </div>
+
+    <div class="dashboard-content-wrapper">
+        <div class="dashboard-header">
+            <h1 id="pageTitle">Your Route Options</h1>
+            <p>Click on a route to see details and highlight it on the map.</p>
+        </div>
+
+        <div class="route-options-wrapper">
+            <div class="route-options" id="routeOptionsContainer">
+                <p class="initial-message">Loading route options...</p>
+            </div>
+        </div>
+
+        <div class="map-and-details-wrapper">
+            <div class="map-placeholder">
+                <div id="mapid"></div>
+            </div>
+        </div>
+
+        <div class="route-actions" style="width: 100%; max-width: 1000px; text-align: center; margin-top: 20px;">
+            <button id="selectRouteBtn" class="submit-btn" style="display: none;">Select and Save Route</button>
+        </div>
+        <div class="emergency-contacts">
+            <h3>Emergency Contact Information</h3>
+            <ul>
+                <li><strong>Police/SOS:</strong> <a href="tel:112">112</a> (All-in-one emergency number in India)</li>
+                <li><strong>Fire:</strong> <a href="tel:101">101</a></li>
+                <li><strong>Ambulance:</strong> <a href="tel:102">102</a> or <a href="tel:108">108</a></li>
+                <li><strong>Women's Helpline:</strong> <a href="tel:1091">1091</a></li>
+                <li><strong>Child Helpline:</strong> <a href="tel:1098">1098</a></li>
+                <li><strong>Cyber Crime Helpline:</strong> <a href="tel:1930">1930</a></li>
+            </ul>
+            <p class="simulation-note">Please use these numbers only in case of a genuine emergency.</p>
+        </div>
+
+        <a href="dashboard.html" class="back-button">Go Back to Dashboard</a>
+    </div>
+
+    <script>
+        let map;
+        let allRoutePolylines = [];
+        let currentMarkers = [];
+        let crimeHeatmapLayer = null;
+        let routesArray; // Global variable to store routes data
+        let selectedRouteData = null; // Store data for the currently selected route
+
+        const distinctRouteColors = [
+            '#FF0000',
+            '#0000FF',
+            '#008000',
+            '#FFA500',
+            '#8A2BE2',
+            '#FF4500',
+            '#1E90FF',
+            '#32CD32',
+            '#FF69B4',
+            '#4B0082'
+        ];
+
+        function initMap() {
+            const mapOptions = {
+                center: {
+                    lat: 12.9716,
+                    lng: 77.5946
+                },
+                zoom: 13,
+                mapId: 'YOUR_MAP_ID'
+            };
+            map = new google.maps.Map(document.getElementById('mapid'), mapOptions);
+
+            const mockRoutesData = [{
+                name: 'Route 1',
+                duration: '1 hour 24 mins',
+                distance: '55.5 km',
+                safetyScore: 5.02,
+                coordinates: [
+                    [12.978, 77.585],
+                    [12.975, 77.595],
+                    [12.970, 77.600],
+                    [12.965, 77.590]
+                ],
+                safetyDetails: 'This is a well-lit route with low crime rates during most hours.'
+            }, {
+                name: 'Route 2',
+                duration: '1 hour 25 mins',
+                distance: '52.0 km',
+                safetyScore: 4.86,
+                coordinates: [
+                    [12.978, 77.585],
+                    [12.973, 77.598],
+                    [12.968, 77.605],
+                    [12.965, 77.590]
+                ],
+                safetyDetails: 'This route has some medium-risk sections but is generally safe.'
+            }, {
+                name: 'Route 3',
+                duration: '1 hour 31 mins',
+                distance: '54.5 km',
+                safetyScore: 1.26,
+                coordinates: [
+                    [12.978, 77.585],
+                    [12.970, 77.590],
+                    [12.965, 77.588],
+                    [12.965, 77.590]
+                ],
+                safetyDetails: 'This is the shortest route but has some isolated sections, use caution at night.'
+            }];
+
+            const storedPredictionData = localStorage.getItem('routePredictionData');
+            const storedPreference = localStorage.getItem('selectedRoutePreference');
+            if (storedPredictionData && storedPreference) {
+                const parsedData = JSON.parse(storedPredictionData);
+                routesArray = parsedData.routes;
+                displayRoutes(routesArray);
+                localStorage.removeItem('routePredictionData');
+                localStorage.removeItem('selectedRoutePreference');
+            } else {
+                routesArray = mockRoutesData;
+                displayRoutes(routesArray);
+            }
+        }
+
+        function getScoreInfo(score, routeIndex) {
+            const numScore = parseFloat(score);
+            let categoryClass;
+            if (numScore >= 6.5) {
+                categoryClass = 'high-safety';
+            } else if (numScore >= 5.5) {
+                categoryClass = 'medium-safety';
+            } else {
+                categoryClass = 'low-safety';
+            }
+            const color = distinctRouteColors[routeIndex % distinctRouteColors.length];
+            return {
+                class: categoryClass,
+                color: color
+            };
+        }
+
+        function clearMapElements() {
+            allRoutePolylines.forEach(polyline => polyline.setMap(null));
+            allRoutePolylines = [];
+            currentMarkers.forEach(marker => marker.setMap(null));
+            currentMarkers = [];
+            if (crimeHeatmapLayer) {
+                crimeHeatmapLayer.setMap(null);
+                crimeHeatmapLayer = null;
+            }
+        }
+
+        function displayRoutes(routesArray) {
+            clearMapElements();
+            const routeOptionsContainer = document.getElementById('routeOptionsContainer');
+            routeOptionsContainer.innerHTML = '';
+
+            if (!routesArray || routesArray.length === 0) {
+                routeOptionsContainer.innerHTML = '<p class="initial-message">No route options available for this selection.</p>';
+                map.setCenter({
+                    lat: 12.9716,
+                    lng: 77.5946
+                });
+                map.setZoom(13);
+                return;
+            }
+
+            routesArray.sort((a, b) => parseFloat(b.safetyScore) - parseFloat(a.safetyScore));
+
+            let bounds = new google.maps.LatLngBounds();
+
+            routesArray.forEach((route, index) => {
+                const routeCard = document.createElement('div');
+                routeCard.classList.add('route-card');
+                routeCard.dataset.routeId = index;
+
+                const scoreInfo = getScoreInfo(route.safetyScore, index);
+                routeCard.classList.add(scoreInfo.class);
+                routeCard.style.setProperty('--route-card-color', scoreInfo.color);
+
+                let name = `Route ${index + 1}`;
+                if (index === 0) {
+                    name = `Safest Path`;
+                    routeCard.classList.add('safest-path');
+                    routeCard.style.setProperty('--route-card-color', '#51B855');
+                }
+
+                routeCard.innerHTML = `
+                    <h4>${name}</h4>
+                    <p>Duration: ${route.duration} | Distance: ${route.distance}</p>
+                    <p class="score">Safety: <span class="${scoreInfo.class}">${parseFloat(route.safetyScore).toFixed(2)}/10</span></p>
+                `;
+                routeOptionsContainer.appendChild(routeCard);
+
+                const polyline = new google.maps.Polyline({
+                    path: route.coordinates.map(coord => ({
+                        lat: coord[0],
+                        lng: coord[1]
+                    })),
+                    geodesic: true,
+                    strokeColor: scoreInfo.color,
+                    strokeOpacity: 0.7,
+                    strokeWeight: 5,
+                });
+                polyline.setMap(map);
+                allRoutePolylines.push(polyline);
+
+                route.coordinates.forEach(coord => bounds.extend(new google.maps.LatLng(coord[0], coord[1])));
+
+                routeCard.addEventListener('click', () => {
+                    selectRoute(routesArray[index], allRoutePolylines[index], index);
+                });
+            });
+
+            map.fitBounds(bounds);
+
+            if (routesArray.length > 0) {
+                selectRoute(routesArray[0], allRoutePolylines[0], 0);
+            }
+        }
+
+       function selectRoute(route, polylineLayer, routeId) {
+        // Store the selected route data globally
+        selectedRouteData = {
+            routeId: routeId,
+            route: route
+        };
+
+        const selectRouteBtn = document.getElementById('selectRouteBtn');
+        selectRouteBtn.style.display = 'block';
+
+        document.querySelectorAll('.route-card').forEach(card => card.classList.remove('selected'));
+
+        const selectedRouteCard = document.querySelector(`.route-card[data-routeId="${routeId}"]`);
+        if (selectedRouteCard) {
+            selectedRouteCard.classList.add('selected');
+        }
+
+        allRoutePolylines.forEach((pl, idx) => {
+            const scoreInfo = getScoreInfo(routesArray[idx].safetyScore, idx);
+            if (idx === routeId) {
+                pl.setOptions({
+                    strokeOpacity: 1.0,
+                    strokeWeight: 7,
+                    strokeColor: scoreInfo.color
+                });
+            } else {
+                pl.setOptions({
+                    strokeOpacity: 0.7,
+                    strokeWeight: 5,
+                    strokeColor: scoreInfo.color
+                });
+            }
+        });
+
+        currentMarkers.forEach(marker => marker.setMap(null));
+        currentMarkers = [];
+
+        const startCoord = {
+            lat: route.coordinates[0][0],
+            lng: route.coordinates[0][1]
+        };
+        const endCoord = {
+            lat: route.coordinates[route.coordinates.length - 1][0],
+            lng: route.coordinates[route.coordinates.length - 1][1]
+        };
+
+        // --- CORRECTED MARKER CODE ---
+        const startMarker = new google.maps.Marker({
+            position: startCoord,
+            map: map,
+            title: 'Start Point',
+            icon: {
+                    url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
+                }
+           
+        });
+
+        const endMarker = new google.maps.Marker({
+            position: endCoord,
+            map: map,
+            title: 'End Point',
+            icon: {
+                    url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
+                }
+            
+           
+        });
+
+        currentMarkers.push(startMarker, endMarker);
+         let bounds = new google.maps.LatLngBounds();
+            allRoutePolylines.forEach(polyline => {
+                let path = polyline.getPath();
+                for (let i = 0; i < path.getLength(); i++) {
+                    bounds.extend(path.getAt(i));
+                }
+            });
+
+        map.fitBounds(polylineLayer.getBounds());
+    }
+
+
+        // Function to save the selected route
+        async function saveSelectedRoute() {
+            if (!selectedRouteData) {
+                alert('Please select a route first.');
+                return;
+            }
+
+            const userId = localStorage.getItem('user_id');
+            if (!userId) {
+                alert('You must be logged in to save a route.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const route = selectedRouteData.route;
+            const startPoint = route.coordinates[0];
+            const endPoint = route.coordinates[route.coordinates.length - 1];
+
+            const dataToSend = {
+                user_id: parseInt(userId),
+                source_lat: startPoint[0],
+                source_lng: startPoint[1],
+                destination_lat: endPoint[0],
+                destination_lng: endPoint[1],
+                selected_route: {
+                    name: route.name,
+                    coordinates: route.coordinates,
+                    safetyScore: route.safetyScore
+                }
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/save_selected_route', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dataToSend)
+                });
+
+                const result = await response.json();
+                if (response.ok && result.status === 'success') {
+                    alert('Route saved successfully!');
+
+                    const newRouteId = result.route_id;
+                    window.location.href = `feedback.html?segment_id=${newRouteId}`;
+                } else {
+                    alert(`Error saving route: ${result.message || 'Unknown error.'}`);
+                }
+            } catch (error) {
+                console.error('Error saving route:', error);
+                alert('An error occurred while saving the route.');
+            }
+        }
+
+        // Add event listener for the "Select and Save Route" button
+        document.addEventListener('DOMContentLoaded', () => {
+            const selectRouteBtn = document.getElementById('selectRouteBtn');
+            if (selectRouteBtn) {
+                selectRouteBtn.addEventListener('click', saveSelectedRoute);
+            }
+        });
+    </script>
+</body>
+</html>

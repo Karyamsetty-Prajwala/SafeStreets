@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>SafeStreets - Login</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+ 
+    
+</head>
+<body>
+    <video playsinline autoplay muted loop id="bg-video">
+        <source src="Video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <header class="main-header">
+        <div class="logo">SafeStreets</div>
+        <nav class="main-nav"></nav>
+    </header>
+
+    
+
+    <section class="glass-container">
+        <h1>Welcome to SafeStreets</h1>
+
+        <div class="login-container">
+            <form id="loginForm">
+                <h2>Login</h2>
+                <div class="form-group">
+                    <label for="loginUsername">Email:</label>
+                    <input type="text" id="loginUsername" name="username" required />
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password:</label>
+                    <input type="password" id="loginPassword" name="password" required />
+                </div>
+                <p id="loginMessage" class="message"></p>
+                <button type="submit">Login</button>
+            </form>
+
+            <form id="signupForm" class="hidden">
+                <h2>Sign Up</h2>
+              
+                <div class="form-group">
+                    <label for="signupName">Full Name:</label>
+                    <input type="text" id="signupName" name="name" required />
+                </div>
+                
+                <div class="form-group">
+                    <label for="signupEmail">Email:</label>
+                    <input type="email" id="signupEmail" name="email" required />
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password:</label>
+                    <input type="password" id="signupPassword" name="password" required />
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password:</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required />
+                </div>
+                <div class="form-group">
+                    <label for="signupPhone">Phone Number</label>
+                    <input type="tel" id="signupPhone" name="phone"  required/>
+                </div>
+                <div class="form-group">
+                    <label for="signupGender"> Gender  </label>
+                    <select id="signupGender" name="gender" required>
+                        <option value="">Select...</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <p id="signupMessage" class="message"></p>
+                <button type="submit">Sign Up</button>
+            </form>
+
+            <form id="forgotPasswordForm" class="hidden">
+                <h2>Forgot Password</h2>
+                <div class="form-group">
+                    <label for="resetEmail">Enter your Email:</label>
+                    <input type="email" id="resetEmail" name="email" required />
+                </div>
+                <p id="forgotMessage" class="message"></p>
+                <button type="submit">Reset Password</button>
+            </form>
+
+            <div class="login-links">
+                <a href="#" id="showSignup">Don't have an account? Sign Up</a> |
+                <a href="#" id="showForgotPassword">Forgot Password?</a> |
+                <a href="#" id="showLogin" class="hidden">Back to Login</a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+
+    const showSignupLink = document.getElementById('showSignup');
+    const showForgotPasswordLink = document.getElementById('showForgotPassword');
+    const showLoginLink = document.getElementById('showLogin');
+
+    const loginMessageDisplay = document.getElementById('loginMessage');
+    const signupMessageDisplay = document.getElementById('signupMessage');
+    const forgotMessageDisplay = document.getElementById('forgotMessage');
+
+    const API_URL = "http://127.0.0.1:5000/api";
+
+    function showForm(formToShow) {
+        loginForm.classList.add('hidden');
+        signupForm.classList.add('hidden');
+        forgotPasswordForm.classList.add('hidden');
+
+        loginMessageDisplay.textContent = '';
+        signupMessageDisplay.textContent = '';
+        forgotMessageDisplay.textContent = '';
+
+        formToShow.classList.remove('hidden');
+
+        if (formToShow === loginForm) {
+            showSignupLink.classList.remove('hidden');
+            showForgotPasswordLink.classList.remove('hidden');
+            showLoginLink.classList.add('hidden');
+        } else {
+            showSignupLink.classList.add('hidden');
+            showForgotPasswordLink.classList.add('hidden');
+            showLoginLink.classList.remove('hidden');
+        }
+    }
+
+    function showMessage(displayElement, msg, type) {
+        displayElement.textContent = msg;
+        displayElement.classList.remove('hidden');
+        displayElement.className = `message ${type}`;
+        setTimeout(() => {
+            displayElement.classList.add('hidden');
+            displayElement.textContent = '';
+        }, 5000);
+    }
+
+    showSignupLink.addEventListener('click', e => {
+        e.preventDefault();
+        showForm(signupForm);
+    });
+
+    showForgotPasswordLink.addEventListener('click', e => {
+        e.preventDefault();
+        showForm(forgotPasswordForm);
+    });
+
+    showLoginLink.addEventListener('click', e => {
+        e.preventDefault();
+        showForm(loginForm);
+    });
+
+    // ✅ LOGIN
+    loginForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const email = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+
+        if (!email || !password) {
+            showMessage(loginMessageDisplay, 'Please enter both email and password.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.status === 'success') {
+                // Store user data in local storage
+                localStorage.setItem('user_id', result.user_id);
+                localStorage.setItem('username', result.username);
+
+                showMessage(loginMessageDisplay, 'Login successful! Redirecting...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+            } else {
+                showMessage(loginMessageDisplay, result.message || 'Login failed.', 'error');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            showMessage(loginMessageDisplay, 'An error occurred during login.', 'error');
+        }
+    });
+
+    // ✅ SIGNUP
+    signupForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const name = document.getElementById('signupName').value.trim();
+        const email = document.getElementById('signupEmail').value.trim();
+        const password = document.getElementById('signupPassword').value.trim();
+        const confirmPassword = document.getElementById('confirmPassword').value.trim();
+        const phone = document.getElementById('signupPhone').value.trim();
+        const gender = document.getElementById('signupGender').value;
+
+        if (!name || !email || !password || !confirmPassword || !phone || !gender) {
+            showMessage(signupMessageDisplay, 'All fields are required.', 'error');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            showMessage(signupMessageDisplay, 'Passwords do not match!', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password, phone, gender })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.status === 'success') {
+                showMessage(signupMessageDisplay, 'Registration successful! Please log in.', 'success');
+                setTimeout(() => showForm(loginForm), 1500);
+            } else {
+                showMessage(signupMessageDisplay, result.message || 'Registration failed.', 'error');
+            }
+        } catch (error) {
+            console.error('Signup error:', error);
+            showMessage(signupMessageDisplay, 'An error occurred during signup.', 'error');
+        }
+    });
+
+    // ✅ FORGOT PASSWORD
+    forgotPasswordForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const email = document.getElementById('resetEmail').value.trim();
+
+        if (!email) {
+            showMessage(forgotMessageDisplay, 'Please enter your email.', 'error');
+            return;
+        }
+
+        showMessage(forgotMessageDisplay, 'Password reset link sent to your email (simulated).', 'success');
+        setTimeout(() => showForm(loginForm), 2000);
+    });
+
+    </script>
+</body>
+</html>

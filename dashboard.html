@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SafeStreets Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2575fc;
+            --secondary-color: #6a11cb;
+            --text-color-dark: #111;
+            --text-color-light: #fff;
+            --logo-color: #FFD700;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            
+        }
+        /* Styles for the entire suggestion container */
+.pac-container {
+    font-size: 1.5em; 
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    margin-top: 5px;
+    z-index: 9999;
+    overflow: hidden;
+}
+
+/* Styles for each individual suggestion item */
+.pac-item {
+    padding: 15px; 
+    font-size: 1.2em;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+    color: var(--text-color-dark);
+}
+
+/* THIS IS THE KEY CHANGE */
+/* Increase the font size of the primary location name */
+.pac-item-query {
+    font-size: 1em;
+}
+
+/* Also increase the font size of the secondary text */
+.pac-item-subtext {
+    font-size: 1em;
+}
+
+/* Optional: Make icons larger and align them better */
+.pac-icon {
+    transform: scale(1.5);
+    margin-right: 15px;
+}
+
+.pac-item:hover, .pac-item-selected {
+    background-color: #f0f0f0;
+}
+
+        #bg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -10;
+            filter: brightness(0.6) blur(2px);
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -9;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+             width: 240px;
+    background: rgba(0, 0, 0, 0.85);
+    color: var(--text-color-light);
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    height: calc(100vh - 100px); /* Adjust height to fill remaining space */
+}
+
+
+        .sidebar h2 {
+            font-size: 2em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .sidebar ul li {
+            margin: 15px 0;
+        }
+
+        .sidebar ul li a {
+            text-decoration: none;
+            color: var(--text-color-light);
+            font-weight: 500;
+            font-size: 1.5em;
+            transition: color 0.3s ease;
+            display: block;
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .sidebar ul li a:hover {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+        }
+        
+
+        /* --- Main content --- */
+        .main-content {
+            margin-left: 240px; /* Space for sidebar */
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .dashboard-container {
+            margin-top: 40px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dashboard-container h1 {
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+            font-weight: 700;
+            font-size: 2.5em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 1.5em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            font-size: 1.5em;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(37, 117, 252, 0.5);
+        }
+
+        .submit-btn {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            color: var(--text-color-light);
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.8em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(to left, var(--primary-color), var(--secondary-color));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* --- Loading Overlay --- */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            color: white;
+            font-size: 1.2em;
+            text-align: center;
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            .main-content {
+                margin-left: 200px;
+                padding: 20px;
+            }
+            .dashboard-container h1 {
+                font-size: 2em;
+            }
+        }
+
+.main-header {
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 15px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+.logo {
+    font-size: 4em;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--logo-color); /* Changed to the new variable for yellow */
+}
+
+.main-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+.main-nav ul li {
+    margin-left: 30px;
+}
+
+.main-nav ul li a {
+    color: var(--text-color-light);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: em;
+    transition: color 0.3s ease;
+}
+
+.main-nav ul li a:hover {
+    color: var(--primary-color);
+}
+.main-layout-wrapper {
+    display: flex;
+    flex-direction: row;
+    /* Pushes content down to create a gap below the fixed header */
+    padding-top: 100px;
+    width: 100%;
+    align-items: flex-start;
+    justify-content: center;
+    box-sizing: border-box;
+}
+.container {
+    /* ... other existing styles ... */
+    margin-left: 20px;
+    flex-grow: 1; /* Allows it to take up the rest of the space */
+}
+        
+    </style>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA3emQ7hGvYfxVuH68wHHIwcBCFzP88y-4&libraries=places&callback=initAutocomplete">
+    </script>
+</head>
+<body>
+    <video playsinline autoplay muted loop id="bg-video">
+        <source src="Video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+      <header class="main-header">
+        <div class="logo">SafeStreets</div>
+        
+    </header>
+ <div class="main-layout-wrapper">
+       <div class="sidebar">
+    <h2>Welcome, Username</h2>
+    <ul>
+        <li><a href="landing.html"><i class="fas fa-home"></i> Home</a></li>
+        <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="ride_history.html"><i class="fas fa-history"></i> Ride History</a></li>
+        <li><a href="feedback.html"><i class="fas fa-comment-dots"></i> Feedback</a></li>
+        <li><a href="profile.html"><i class="fas fa-user-circle"></i> User Profile</a></li>
+        <li><a href="index.html"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    </ul>
+</div>
+
+    <div class="main-content">
+        <div class="dashboard-container">
+            <h1 id="welcomeMessage">Welcome, User!</h1>
+            <h1>Find Your Safest Route</h1>
+            <form id="routeForm">
+                <div class="form-group">
+                    <label for="origin">Origin:</label>
+                    <input type="text" id="origin" placeholder="Enter your starting location" required>
+                </div>
+                <div class="form-group">
+                    <label for="destination">Destination:</label>
+                    <input type="text" id="destination" placeholder="Enter your destination" required>
+                </div>
+                <input type="hidden" id="selectedPreference" name="preference" value="safest">
+                <button type="submit" class="submit-btn">Find Safe Routes</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Finding the safest routes...</p>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check for both keys from local storage
+            const usernameFromLogin = localStorage.getItem('username');
+            const usernameFromLegacy = localStorage.getItem('loggedInUsername');
+            const userId = localStorage.getItem('user_id');
+
+            // Use the most reliable username available
+            const displayUsername = usernameFromLogin || usernameFromLegacy;
+
+            if (!displayUsername || !userId) {
+                console.error('User not logged in. Redirecting.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Update welcome messages on the page
+            const welcomeMessageElement = document.getElementById('welcomeMessage');
+            if (welcomeMessageElement) {
+                welcomeMessageElement.textContent = `Welcome, ${displayUsername}!`;
+            }
+
+            const sidebarGreetingElement = document.querySelector('.sidebar h2');
+            if (sidebarGreetingElement) {
+                sidebarGreetingElement.textContent = `Welcome, ${displayUsername}`;
+            }
+
+            // Fetch dashboard data from the backend
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/api/dashboard/${userId}`);
+                if (!response.ok) throw new Error('Failed to fetch user data');
+                
+                const userData = await response.json();
+                console.log('User dashboard data:', userData);
+                
+                // You can now populate other parts of your dashboard with userData
+                // For example:
+                // document.getElementById('userEmail').textContent = userData.user.email;
+                // ...
+                
+            } catch (err) {
+                console.error('Error loading dashboard data:', err);
+            }
+        });
+
+        let geocoder;
+        function initAutocomplete() {
+            geocoder = new google.maps.Geocoder();
+            const originInput = document.getElementById('origin');
+            const destinationInput = document.getElementById('destination');
+
+            new google.maps.places.Autocomplete(originInput, {
+                types: ['geocode'],
+                componentRestrictions: { 'country': 'in' }
+            });
+
+            new google.maps.places.Autocomplete(destinationInput, {
+                types: ['geocode'],
+                componentRestrictions: { 'country': 'in' }
+            });
+        }
+
+        async function geocodeAddress(address) {
+            return new Promise((resolve, reject) => {
+                geocoder.geocode({ 'address': address }, (results, status) => {
+                    if (status === 'OK') {
+                        const location = results[0].geometry.location;
+                        resolve([location.lat(), location.lng()]);
+                    } else {
+                        reject('Geocode failed: ' + status);
+                    }
+                });
+            });
+        }
+
+        const routeForm = document.getElementById('routeForm');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        routeForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            loadingOverlay.style.display = 'flex';
+
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const selectedPreference = document.getElementById('selectedPreference').value;
+
+            if (!origin || !destination) {
+                alert('Please enter both origin and destination.');
+                loadingOverlay.style.display = 'none';
+                return;
+            }
+
+            try {
+                const startPointCoords = await geocodeAddress(origin);
+                const endPointCoords = await geocodeAddress(destination);
+                
+                const response = await fetch('http://127.0.0.1:5000/api/get_routes_with_safety', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        start_point: startPointCoords,
+                        end_point: endPointCoords,
+                        preference: selectedPreference
+                    })
+                });
+
+                const data = await response.json();
+                loadingOverlay.style.display = 'none';
+
+                if (response.ok && data.status === 'success') {
+                    localStorage.setItem('routePredictionData', JSON.stringify(data));
+                    localStorage.setItem('selectedRoutePreference', selectedPreference);
+                    window.location.href = 'map_display.html';
+                } else {
+                    alert(`Error: ${data.message || 'Unknown issue'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                loadingOverlay.style.display = 'none';
+                alert(`An error occurred: ${error}`);
+            }
+        });
+    </script>
+</body>
+</html>
