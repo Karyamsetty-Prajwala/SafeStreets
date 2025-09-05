@@ -813,3 +813,19 @@ def send_static(path):
 @app.route('/')
 def home():
     return send_from_directory('.', 'landing.html')
+@app.route("/api/test_db")
+def test_db():
+    global db_pool
+    if db_pool is None:
+        return {"status": "error", "message": "Database pool not initialized"}, 500
+    try:
+        conn = db_pool.getconn()
+        cur = conn.cursor()
+        cur.execute("SELECT version();")
+        version = cur.fetchone()[0]
+        cur.close()
+        db_pool.putconn(conn)
+        return {"status": "success", "db_version": version}, 200
+    except Exception as e:
+        return {"status": "error", "message": str(e)}, 500
+
