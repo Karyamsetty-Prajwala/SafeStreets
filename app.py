@@ -34,12 +34,11 @@ else:
 
 # Database Connection Pool
 db_pool = None
-
 def init_db_pool():
     global db_pool
     if db_pool is None:
         try:
-            # Parse the DATABASE_URL provided by Render
+            # Get the DATABASE_URL provided by Render
             DATABASE_URL = os.getenv('DATABASE_URL')
             if DATABASE_URL is None:
                 raise ValueError("DATABASE_URL environment variable is not set.")
