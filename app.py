@@ -12,7 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
 import googlemaps
 import random
-
+from urllib.parse import urlparse
 # Load environment variables
 load_dotenv()
 
@@ -39,20 +39,25 @@ def init_db_pool():
     global db_pool
     if db_pool is None:
         try:
+            # Parse the DATABASE_URL provided by Render
+            DATABASE_URL = os.getenv('postgresql://safestreets_db_user:BDGVKWdizgPz8WBrgqS2HlxUxLT1ecIQ@dpg-d2tclsmuk2gs73coglng-a/safestreets_db')
+            if DATABASE_URL is None:
+                raise ValueError("DATABASE_URL environment variable is not set.")
+            
+            url = urlparse(DATABASE_URL)
             db_pool = psycopg2.pool.SimpleConnectionPool(
                 minconn=1,
                 maxconn=10,
-                user=os.getenv('DB_USER'),
-                password=os.getenv('DB_PASSWORD'),
-                host=os.getenv('DB_HOST'),
-                port=os.getenv('DB_PORT'),
-                database=os.getenv('DB_DATABASE')
+                user=url.username,
+                password=url.password,
+                host=url.hostname,
+                port=url.port,
+                database=url.path[1:]
             )
             print("Successfully initialized PostgreSQL connection pool!")
         except Exception as e:
             print(f"Error initializing database pool: {e}")
             db_pool = None
-
 @app.teardown_appcontext
 def close_db_pool(exception=None):
     global db_pool
