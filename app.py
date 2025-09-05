@@ -12,7 +12,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
 import googlemaps
 import random
-from flask import Flask, jsonify, request, send_from_directory
 
 # Load environment variables
 load_dotenv()
@@ -164,10 +163,6 @@ def get_nearby_crime_data(lat, lon, radius_km=0.5):
 # -----------------------------
 # API Routes
 # -----------------------------
-@app.route('/')
-def hello_world():
-    return jsonify({"message": "SafeStreets Python Backend API is running!"})
-
 @app.route('/api/save_selected_route', methods=['POST'])
 def save_selected_route():
     """
@@ -210,11 +205,6 @@ def save_selected_route():
         if cur: cur.close()
         if conn: db_pool.putconn(conn)
 
-# In app.py, replace the existing /api/get_route_history route with this:
-# In app.py, replace the existing get_route_history function with this:
-# In app.py, replace the existing get_route_history function with this:
-# In app.py, replace the existing get_route_history function with this:
-# In app.py, replace the existing get_route_history function with this:
 @app.route('/api/get_route_history/<int:user_id>', methods=['GET'])
 def get_route_history(user_id):
     """
@@ -280,12 +270,12 @@ def create_tables():
     try:
         if db_pool is None: init_db_pool()
         if db_pool is None: return jsonify({"status": "error", "message": "Database pool not initialized."}), 500
-
+        
         conn = db_pool.getconn()
         if conn is None: raise Exception("Failed to get a connection from the pool.")
-
+        
         cur = conn.cursor()
-
+        
         # Drop tables in a safe order to avoid foreign key conflicts
         cur.execute("DROP TABLE IF EXISTS route_history CASCADE;")
         cur.execute("DROP TABLE IF EXISTS feedback CASCADE;")
@@ -318,7 +308,7 @@ def create_tables():
                 reported_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         """)
-
+        
         cur.execute("""
             CREATE TABLE feedback (
                 feedback_id SERIAL PRIMARY KEY,
@@ -409,7 +399,7 @@ def get_user_data(username):
             } for r in ride_history_records
         ]
         user_data["ride_history"] = ride_history
-
+        
         # 3. Fetch recent feedback for this user
         cur.execute("""
             SELECT rating, comment, submitted_at
@@ -447,7 +437,7 @@ def get_address_from_coords(lat, lng):
     if not gmaps:
         # Return coordinates if the API client is not initialized
         return f"Lat: {lat}, Lng: {lng}"
-
+    
     try:
         # Use result_type='locality' to get a good place name, or leave it for a full address
         reverse_geocode_result = gmaps.reverse_geocode((lat, lng))
@@ -477,7 +467,7 @@ def load_crime_data():
     try:
         conn = db_pool.getconn()
         if conn is None: raise Exception("Failed to get a connection from the pool.")
-
+        
         cur = conn.cursor()
         insert_count = 0
 
@@ -495,7 +485,7 @@ def load_crime_data():
                 crime.get('crime_type')
             ))
             insert_count += 1
-
+        
         conn.commit()
         return jsonify({"status": "success", "message": f"{insert_count} crime records loaded successfully."}), 201
 
@@ -515,7 +505,7 @@ def save_feedback():
     segment_id = data.get('segment_id')
     rating = data.get('rating')
     comment = data.get('comment')
-
+    
     if db_pool is None:
         init_db_pool()
     if db_pool is None:
@@ -555,7 +545,7 @@ def get_feedback(user_id):
             init_db_pool()
         if db_pool is None:
             return jsonify({"status": "error", "message": "Database pool not initialized."}), 500
-
+            
         conn = db_pool.getconn()
         cur = conn.cursor()
         cur.execute("""
@@ -575,7 +565,7 @@ def get_feedback(user_id):
                 "comment": r[4],
                 "submitted_at": r[5].isoformat() if r[5] else None # Handles NULL submitted_at
             })
-
+        
         return jsonify({"feedback": feedback_list}), 200
     except Exception as e:
         print(f"Error fetching feedback: {e}")
@@ -583,7 +573,7 @@ def get_feedback(user_id):
     finally:
         if cur: cur.close()
         if conn: db_pool.putconn(conn)
-
+        
 @app.route('/api/test_db')
 def test_db_connection():
     """Checks the database connection and returns the version."""
@@ -604,7 +594,7 @@ def test_db_connection():
         return jsonify({"status": "error", "message": f"Database connection failed: {e}"}), 500
     finally:
         if conn: db_pool.putconn(conn)
-
+            
 @app.route('/api/users', methods=['GET'])
 def get_all_users():
     """Fetches and returns a list of all registered users."""
@@ -653,7 +643,7 @@ def register_user():
     try:
         conn = db_pool.getconn()
         cur = conn.cursor()
-
+        
         cur.execute("""INSERT INTO users (name, email, password_hash, phone, gender) 
                     VALUES (%s, %s, %s, %s, %s) RETURNING user_id;""",
                     (name, email, hashed_password, phone, gender))
@@ -680,7 +670,7 @@ def login_user():
     """Handles user login by verifying credentials against the database."""
     if db_pool is None: init_db_pool()
     if db_pool is None: return jsonify({"status": "error", "message": "Database pool not initialized."}), 500
-
+    
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
@@ -693,11 +683,11 @@ def login_user():
         conn = db_pool.getconn()
         if conn is None: raise Exception("Failed to get a connection from the pool.")
         cur = conn.cursor()
-
+        
         cur.execute("SELECT user_id, name, email, password_hash FROM users WHERE email = %s;",
                     (email,))
         user_record = cur.fetchone()
-
+        
         if user_record and check_password_hash(user_record[3], password):
             return jsonify({"status": "success", "message": "Login successful!", "user_id": user_record[0], "username": user_record[1], "email": user_record[2]}), 200
         else:
@@ -728,7 +718,7 @@ def get_routes_with_safety():
 
     start_coords = (start_point[0], start_point[1])
     end_coords = (end_point[0], end_point[1])
-
+    
     routes_to_return = []
 
     if gmaps:
@@ -744,14 +734,14 @@ def get_routes_with_safety():
                 route_name = f"Route {idx + 1}"
                 if preference == 'safest' and idx == 0:
                     route_name = "Safest Path" 
-
+                
                 polyline_coords = []
                 for leg in route['legs']:
                     for step in leg['steps']:
                         encoded_polyline = step['polyline']['points']
                         decoded_path = googlemaps.convert.decode_polyline(encoded_polyline)
                         polyline_coords.extend(decoded_path)
-
+                
                 duration = route['legs'][0]['duration']['text']
                 distance = route['legs'][0]['distance']['text']
 
@@ -762,7 +752,7 @@ def get_routes_with_safety():
 
                 ml_features = generate_features_for_prediction(representative_lat, representative_lon)
                 df_ml_input = pd.DataFrame([ml_features])
-
+                
                 if model_pipeline:
                     try:
                         df_ml_input = df_ml_input[original_X_columns]
@@ -775,7 +765,7 @@ def get_routes_with_safety():
 
                 nearby_crime_data = get_nearby_crime_data(representative_lat, representative_lon)
                 final_safety_score = ml_predicted_score
-
+                
                 safety_details = f"{route_name}: Safety score derived from ML model."
                 if nearby_crime_data.get("incident_count", 0) > 0:
                     final_safety_score -= 1.0 
@@ -805,14 +795,17 @@ def get_routes_with_safety():
 
     if preference == 'safest':
         routes_to_return.sort(key=lambda x: x['safetyScore'], reverse=True)
-
+    
     return jsonify({
         "status": "success",
         "message": "Routes and safety scores generated.",
         "routes": routes_to_return
     })
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=os.getenv('PORT', 5000))
+
 @app.route('/<path:path>')
 def send_static(path):
     return send_from_directory('.', path)
